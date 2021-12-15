@@ -17,6 +17,7 @@ import SettingsInputComponentIcon from '@mui/icons-material/SettingsInputCompone
 import TimerIcon from '@mui/icons-material/Timer';
 import SettingsIcon from '@mui/icons-material/Settings';
 import PhonelinkSetupIcon from '@mui/icons-material/PhonelinkSetup';
+import { useNavigate } from 'react-router';
 
 const categories = [
     {
@@ -53,14 +54,6 @@ const categories = [
             { id: 'Statistics', icon: <PhonelinkSetupIcon /> },
         ],
     },
-    {
-        id: 'Administrator',
-        children: [
-            { id: 'Manage Hotel', icon: <SettingsIcon /> },
-            { id: 'Statistics', icon: <TimerIcon /> },
-            // { id: 'Test Lab', icon: <PhonelinkSetupIcon /> },
-        ],
-    },
 ];
 
 const item = {
@@ -79,7 +72,16 @@ const itemCategory = {
 };
 
 export default function Navigator(props) {
+    const navigate = useNavigate()
     const { ...other } = props;
+
+    const [select, setSelect] = React.useState(0)
+
+    const handleClick = (childId, i) => {
+        setSelect(childId + i)
+        const route = childId.replaceAll(" ", "")
+        navigate(`/protected/${route}`)
+    }
 
     return (
         <Drawer variant="permanent" {...other}>
@@ -92,9 +94,9 @@ export default function Navigator(props) {
                         <ListItem sx={{ py: 2, px: 3 }}>
                             <ListItemText sx={{ color: '#fff' }}>{id}</ListItemText>
                         </ListItem>
-                        {children.map(({ id: childId, icon, active }) => (
+                        {children.map(({ id: childId, icon, active }, i) => (
                             <ListItem disablePadding key={childId}>
-                                <ListItemButton selected={active} sx={item}>
+                                <ListItemButton selected={select === childId + i} sx={item} onClick={() => handleClick(childId, i)}>
                                     <ListItemIcon>{icon}</ListItemIcon>
                                     <ListItemText>{childId}</ListItemText>
                                 </ListItemButton>

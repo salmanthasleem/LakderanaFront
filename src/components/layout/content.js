@@ -3,6 +3,7 @@ import * as React from 'react';
 // import Toolbar from '@mui/material/Toolbar';
 // import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
+import Box from '@mui/material/Box';
 // import Grid from '@mui/material/Grid';
 // import Button from '@mui/material/Button';
 // import TextField from '@mui/material/TextField';
@@ -13,8 +14,11 @@ import Paper from '@mui/material/Paper';
 
 export default function Content(props) {
     return (
-        <Paper sx={{ maxWidth: 936, margin: 'auto', overflow: 'hidden' }}>
-            {props.children}
-        </Paper>
+        <Box component="main" sx={{ flex: 1, py: 6, px: 4 }}>
+            <Paper sx={{ maxWidth: '100%', margin: 'auto', overflow: 'hidden' }}>
+                {props.children}
+            </Paper>
+        </Box>
+
     );
 }

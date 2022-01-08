@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/LakderanaFront/static/css/main.ea1455b2.chunk.css",
+    "main.js": "/LakderanaFront/static/js/main.540ed92e.chunk.js",
+    "main.js.map": "/LakderanaFront/static/js/main.540ed92e.chunk.js.map",
+    "runtime-main.js": "/LakderanaFront/static/js/runtime-main.5a0129c1.js",
+    "runtime-main.js.map": "/LakderanaFront/static/js/runtime-main.5a0129c1.js.map",
+    "static/js/2.c1a474c7.chunk.js": "/LakderanaFront/static/js/2.c1a474c7.chunk.js",
+    "static/js/2.c1a474c7.chunk.js.map": "/LakderanaFront/static/js/2.c1a474c7.chunk.js.map",
+    "static/js/3.d248d67d.chunk.js": "/LakderanaFront/static/js/3.d248d67d.chunk.js",
+    "static/js/3.d248d67d.chunk.js.map": "/LakderanaFront/static/js/3.d248d67d.chunk.js.map",
+    "index.html": "/LakderanaFront/index.html",
+    "static/css/main.ea1455b2.chunk.css.map": "/LakderanaFront/static/css/main.ea1455b2.chunk.css.map",
+    "static/js/2.c1a474c7.chunk.js.LICENSE.txt": "/LakderanaFront/static/js/2.c1a474c7.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.5a0129c1.js",
+    "static/js/2.c1a474c7.chunk.js",
+    "static/css/main.ea1455b2.chunk.css",
+    "static/js/main.540ed92e.chunk.js"
+  ]
+}

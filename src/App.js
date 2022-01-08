@@ -137,8 +137,6 @@ function App() {
                 <Route path="" element={<UnderConstruction text="Hmmm.... Not Sure If This Is The Right Place" />} />
 
               </Route>
-              <Route path="*" element={<UnderConstruction text="Hmmm.... Not Sure If This Is The Right Place" />} />
-              <Route path="" element={<UnderConstruction text="Hmmm.... Not Sure If This Is The Right Place" />} />
             </Route>
           </Routes>
         </AuthProvider>

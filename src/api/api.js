@@ -2,7 +2,7 @@ import axios from 'axios';
 
 
 const api = axios.create({
-    baseURL: 'http://192.168.43.85:3001/api/'
+    baseURL: 'https://lakderana.as.r.appspot.com/api'
 })
 
 export default api

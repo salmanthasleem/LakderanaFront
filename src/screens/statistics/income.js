@@ -1,66 +1,49 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import _TextField from "../../components/auth/textField";
 import { DataGrid, } from '@mui/x-data-grid';
-import { Button, Typography, Modal, Box, TextField, Autocomplete } from "@mui/material";
+import { Box, Button } from "@mui/material";
+import BranchField from "../../components/branchField";
+import { useSelector } from "react-redux";
+import api from "../../api/api";
+import { CSVLink } from "react-csv";
 
 
 const columns = [
-
-    { field: 'id', headerName: 'ID', align: "center", width: 70 },
-    { field: 'name', headerName: 'Name', align: "center", width: 130 },
-    { field: 'roomNo', headerName: 'Room Number', type: 'number', align: "center", width: 130 },
     {
-        field: 'checkedIn',
-        headerName: 'Checked In Date',
+        headerAlign: "center",
+        field: 'id', headerName: 'ID', align: "center", width: 200
+    },
+    {
+        headerAlign: "center",
+        field: 'income', headerName: 'Income', align: "center", width: 350
+    },
+    {
+        headerAlign: "center",
+        field: 'expense', headerName: 'Expense', align: "center", width: 350
+    },
+    {
+        headerAlign: "center",
+        field: 'parsedDate',
+        headerName: 'Date',
+        align: 'center',
+        width: 250,
+        valueGetter: (params) =>
+            params.row.date ? new Date(params.row.date).toLocaleDateString() : null
+    },
+    {
+        headerAlign: "center",
+        field: 'date',
+        headerName: 'Date',
         type: 'date',
         align: "center", width: 150,
+        hide: true
     },
     {
-        field: 'lengthOfStay',
-        headerName: 'Length Of Stay(Nights)',
-        type: 'number',
-        align: "center", width: 90,
+        headerAlign: "center",
+        field: 'description', headerName: 'Description', align: "center", width: 600
     },
-    {
-        field: 'noOfAdults',
-        headerName: 'Number Of Adults',
-        type: 'date',
-        align: "center", width: 150,
-    },
-    {
-        field: 'noOfChildren',
-        headerName: 'Number Of Children',
-        type: 'number',
-        align: "center", width: 170,
-    },
-    {
-        field: 'status',
-        headerName: 'Status',
-        align: "center", width: 120,
-    },
-    // {
-    //     field: 'fullName',
-    //     headerName: 'Full name',
-    //     description: 'This column has a value getter and is not sortable.',
-    //     sortable: false,
-    //     width: 160,
-    //     valueGetter: (params) =>
-    //         `${params.getValue(params.id, 'firstName') || ''} ${params.getValue(params.id, 'lastName') || ''
-    //         }`,
-    // },
 ];
 
-const rows = [
-    { id: 1, name: 'Snow', roomNo: 'Jon', checkedIn: 35, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 2, name: 'Lannister', roomNo: 'Cersei', checkedIn: 42, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 3, name: 'Lannister', roomNo: 'Jaime', checkedIn: 45, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 4, name: 'Stark', roomNo: 'Arya', checkedIn: 16, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 5, name: 'Targaryen', roomNo: 'Daenerys', checkedIn: 5, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 6, name: 'Melisandre', roomNo: null, checkedIn: 150, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 7, name: 'Clifford', roomNo: 'Ferrara', checkedIn: 44, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 8, name: 'Frances', roomNo: 'Rossini', checkedIn: 36, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 9, name: 'Roxie', roomNo: 'Harvey', checkedIn: 65, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-];
 
 const style = {
     position: 'absolute',
@@ -82,11 +65,51 @@ const style = {
 
 const IncomeStats = () => {
     const [selected, setSelected] = useState([])
-    const [open, setOpen] = useState(false);
+    const [date, setDate] = useState("")
+    const [helper, setHelper] = useState("")
+    const [description, setDescription] = useState("")
+    const [incomes, setIncomes] = useState([])
+    const branchId = useSelector(state => state.branch.branchId)
+
+
+    const getIncomes = async (branchId = "", date = "", description = "") => {
+        try {
+            const response = await api.get("/stats/getIncome/", {
+                params: {
+                    branchId: branchId,
+                    date: date,
+                    description
+                }
+            })
+            const data = await response.data
+            const message = data.message
+            setHelper(message)
+            const isAvailable = data.data.isAvailable
+            let rows = data.data.rows
+            if (isAvailable) {
+                rows = rows.filter((row, index, arr) => index === arr.findIndex((item) => row.id === item.id))
+                setIncomes(rows)
+            } else {
+                setIncomes([])
+            }
+        } catch (error) {
+            const data = await error.response.data
+            const message = await data.message
+            setHelper(message)
+            setIncomes([])
+
+        }
+    }
+
+    useEffect(() => {
+        getIncomes(branchId, date, description)
+    }, [branchId, date, description])
+
+
 
     return (
         <>
-            <Box sx={{ display: 'flex', justifyContent: 'space-evenly', alignItems: 'center', marginBottom: '2rem' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-evenly', alignItems: 'center' }}>
                 <_TextField
                     id="date"
                     label="Search By Date"
@@ -96,9 +119,8 @@ const IncomeStats = () => {
                     }}
                     name="date"
                     shrink={true}
-                    // onChange={props.onChange}
-                    error={false}
-                    // helper={}
+                    onChange={(e) => setDate(e.target.value)}
+                    value={date}
                     margin='normal'
                     sx={{
                         padding: 2,
@@ -108,31 +130,49 @@ const IncomeStats = () => {
                     focused={true}
                     fullwidth={false}
                 />
-                <Autocomplete
-                    disablePortal
-                    options={["Branch 1", "Branch 2"]}
-                    renderInput={(params) => <TextField {...params} label="Branch" variant="standard" />}
-
-                    sx={{ width: 1 / 5 }}
-
+                <BranchField container={{ display: 'flex' }} sx={{ margin: '1rem', width: '25rem' }} />
+                <_TextField
+                    id="description"
+                    label="Search By Description"
+                    type="text"
+                    InputLabelProps={{
+                        shrink: true,
+                    }}
+                    name="description"
+                    shrink={true}
+                    onChange={(e) => setDescription(e.target.value)}
+                    value={description}
+                    margin='normal'
+                    sx={{
+                        padding: 2,
+                        width: 1 / 5
+                    }}
+                    variant="standard"
+                    focused={true}
+                    fullwidth={false}
                 />
+
             </Box>
 
             <div style={{ display: 'flex' }}>
-                <div style={{ height: '80vh', width: '100%' }}>
+                <div style={{ height: '70vh', width: '100%' }}>
                     <DataGrid
-                        rows={rows}
+                        rows={incomes}
                         columns={columns}
-                        pageSize={5}
-                        rowsPerPageOptions={[5]}
                         checkboxSelection
                         disableColumnFilter
                         onSelectionModelChange={(...e) => setSelected(e[0])}
                         isRowSelectable={(item) => selected.length > 1 ? false : true}
-
+                        autoPageSize
+                        sx={{ fontSize: 20 }}
                     />
                 </div>
 
+            </div>
+            <div style={{ width: '100%', display: "flex", justifyContent: 'flex-start', alignItems: 'center', height: '4rem', marginLeft: '1rem' }}>
+                {incomes &&
+                    <Button
+                        variant="contained" color="primary" type='button' size="large" sx={{ marginRight: 1 }} disabled={incomes.length > 0 ? false : true} ><CSVLink data={incomes} style={{ textDecoration: 'none', color: 'white' }} >Download Table</CSVLink></Button>}
             </div>
         </>
     )

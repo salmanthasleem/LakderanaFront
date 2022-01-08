@@ -1,66 +1,86 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import _TextField from "../../components/auth/textField";
 import { DataGrid, } from '@mui/x-data-grid';
 import { Box, TextField, Autocomplete } from "@mui/material";
+import api from "../../api/api";
+import BranchField from "../../components/branchField";
+import { useSelector } from "react-redux";
+import SearchEmployee from "../../components/auth/searchEmployee";
 
 
 const columns = [
-
     { field: 'id', headerName: 'ID', align: "center", width: 70 },
-    { field: 'name', headerName: 'Name', align: "center", width: 130 },
-    { field: 'roomNo', headerName: 'Room Number', type: 'number', align: "center", width: 130 },
+    { field: 'branchId', headerName: 'Branch ID', type: 'number', align: "center", width: 200 },
+    { field: 'firstName', headerName: 'First Name', align: "center", width: 200 },
     {
-        field: 'checkedIn',
-        headerName: 'Checked In Date',
+        field: 'lastName',
+        headerName: 'Last Name',
+        align: "center", width: 200,
+    },
+    {
+        field: 'dob',
+        headerName: 'Date Of Birth',
         type: 'date',
-        align: "center", width: 150,
+        align: "center", width: 200,
     },
     {
-        field: 'lengthOfStay',
-        headerName: 'Length Of Stay(Nights)',
-        type: 'number',
-        align: "center", width: 90,
-    },
-    {
-        field: 'noOfAdults',
-        headerName: 'Number Of Adults',
-        type: 'date',
-        align: "center", width: 150,
-    },
-    {
-        field: 'noOfChildren',
-        headerName: 'Number Of Children',
-        type: 'number',
-        align: "center", width: 170,
+        field: 'email',
+        headerName: 'Email',
+        align: "center", width: 300,
     },
     {
         field: 'status',
-        headerName: 'Status',
-        align: "center", width: 120,
+        headerName: 'Employee Type',
+        type: 'number',
+        align: "center", width: 300,
+    },
+    {
+        field: 'userName',
+        headerName: 'Username',
+        align: "center", width: 200,
+    },
+    {
+        field: 'basic',
+        headerName: 'Basic Salary',
+        align: "center", width: 200,
+    },
+    {
+        field: 'travel',
+        headerName: 'Travel Allowance',
+        align: "center", width: 200,
+    },
+    {
+        field: 'penaltyPerLeave',
+        headerName: 'Pay-Cut Per Leave',
+        align: "center", width: 200,
+    },
+    {
+        field: 'noLeavesBonus',
+        headerName: 'No Leaves Bonus(Per Month)',
+        align: "center", width: 200,
+    },
+    {
+        field: 'vacayPerYear',
+        headerName: 'Vacation Per Year(Days)',
+        align: "center", width: 200,
+    },
+    {
+        field: 'leavesAllowed',
+        headerName: 'Leaves Allowed Per Month',
+        align: "center", width: 200,
     },
     // {
-    //     field: 'fullName',
-    //     headerName: 'Full name',
-    //     description: 'This column has a value getter and is not sortable.',
+    //     field: 'travel',
+    //     headerName: 'Travel Allowance',
     //     sortable: false,
-    //     width: 160,
-    //     valueGetter: (params) =>
-    //         `${params.getValue(params.id, 'firstName') || ''} ${params.getValue(params.id, 'lastName') || ''
-    //         }`,
+    //     width: 200,
+    //     valueGetter: ({ row }) => {
+    //         const value = row.isBooked
+    //         return value == 0 ? "Open" : "Booked"
+    //     }
     // },
 ];
 
-const rows = [
-    { id: 1, name: 'Snow', roomNo: 'Jon', checkedIn: 35, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 2, name: 'Lannister', roomNo: 'Cersei', checkedIn: 42, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 3, name: 'Lannister', roomNo: 'Jaime', checkedIn: 45, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 4, name: 'Stark', roomNo: 'Arya', checkedIn: 16, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 5, name: 'Targaryen', roomNo: 'Daenerys', checkedIn: 5, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 6, name: 'Melisandre', roomNo: null, checkedIn: 150, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 7, name: 'Clifford', roomNo: 'Ferrara', checkedIn: 44, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 8, name: 'Frances', roomNo: 'Rossini', checkedIn: 36, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 9, name: 'Roxie', roomNo: 'Harvey', checkedIn: 65, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-];
 
 const style = {
     position: 'absolute',
@@ -79,49 +99,166 @@ const style = {
     minHeight: 200
 };
 
-const date = new Date()
-
 
 const EmployeeDetails = () => {
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
     const [selected, setSelected] = useState([])
-    const [open, setOpen] = useState(false);
+    const [employees, setEmployees] = useState([])
+    const [initialEmployees, setInitialEmployees] = useState([])
+    const [firstNameQuery, setfNameQuery] = useState("")
+    const [lastNameQuery, setlNameQuery] = useState("")
+    const [empId, setEmpId] = useState(null)
+    const [isEmp, setIsEmp] = useState(false)
+    const [isSearch, setIsSearch] = useState(false)
+    const branch = useSelector(state => state.branch.branchId)
+    const empVal = useSelector(state => state.searchEmployee.empValues)
+
+    const getRooms = async () => {
+        const user = await window.localStorage.getItem("@user")
+        const data = await JSON.parse(user)
+        const branchId = data.branchId
+        const employeeId = data.employeeId
+        setEmpId(employeeId)
+        try {
+            const response = await api.get('/manage/employee/searchEmployee/', {
+                params: {
+                    branchId: branchId
+                }
+            })
+            const data = await response.data.data
+            const isAvailable = await data.isAvailable
+            if (isAvailable) {
+                const rows = await data.rows
+                setEmployees(rows)
+                setInitialEmployees(rows)
+            }
+            setIsEmp(isAvailable)
+        } catch (error) {
+            const err = await error.response.data.data
+            const isAvailable = err.isAvailable
+            if (typeof isAvailable === "boolean") {
+                //  setIsRoom(isAvailable)
+            }
+        }
+    }
+
+    const searchQuery = async (requestBody) => {
+        if (requestBody) {
+            try {
+                const req = await api.get("/manage/employee/searchEmployee/", {
+                    params: {
+                        ...requestBody
+                    }
+                })
+                const data = await req.data.data
+                const isAvailable = data.isAvailable
+                const rows = data.rows
+                if (isAvailable) {
+                    setEmployees(rows)
+                    setIsEmp(true)
+                } else {
+                    setEmployees([])
+                    setIsEmp(false)
+                }
+                console.log(rows)
+                //setIsRoom(isRoom)
+            } catch (error) {
+                const isAvailable = error.response.data.data.isAvailable
+                // setIsRoom(isRoom)
+                if (!isAvailable) {
+                    setEmployees([])
+                    setIsEmp(false)
+                }
+            }
+        }
+    }
+
+    useEffect(() => {
+        if (firstNameQuery !== "" || lastNameQuery !== "") {
+            setIsSearch(true)
+        } else {
+            setIsSearch(false)
+        }
+
+        if (!(empVal.branchId && empVal.email) && (firstNameQuery == "" && lastNameQuery == "")) {
+            setEmployees(initialEmployees)
+            setIsEmp(true)
+        }
+
+    }, [firstNameQuery, lastNameQuery, empVal])
+
+    useEffect(() => {
+        if (empVal.branchId && empVal.email) {
+            let data = {
+                firstName: empVal.empFName || "",
+                lastName: empVal.empLName || "",
+                dob: empVal.dob,
+                empType: empVal.status,
+                dob: empVal.dob,
+                branchId: empVal.branchId,
+            }
+            searchQuery(data)
+        } else if (firstNameQuery !== "" || lastNameQuery !== "") {
+            let data = {
+                firstName: firstNameQuery || "",
+                lastName: lastNameQuery || "",
+                branchId: branch,
+            }
+            searchQuery(data)
+        }
+
+    }, [empVal, firstNameQuery, lastNameQuery])
+
+    useEffect(() => {
+        getRooms()
+    }, [])
 
     return (
         <>
-            <Box sx={{ display: 'flex', justifyContent: 'space-evenly', alignItems: 'center' }}>
-                <Autocomplete
-                    disablePortal
-                    options={["John", "Kumar"]}
-                    renderInput={(params) => <TextField {...params} label="Search By Employee Name" variant="standard" />}
-
-                    sx={{ width: 1 / 5 }}
-
+            <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', margin: '1rem 2rem', width: 1 }}>
+            <BranchField showBranchName={true}
+                    container={{ display: 'flex', flexDirection: 'row' }}
+                    sx={{ width: '15rem', margin: '1rem' }}
                 />
-                <Autocomplete
-                    disablePortal
-                    options={["Branch 1", "Branch 2"]}
-                    renderInput={(params) => <TextField {...params} label="Branch" variant="standard" />}
-
-                    sx={{ width: 1 / 5 }}
-
+                <_TextField
+                    label="Search By First Name"
+                    type='text'
+                    value={firstNameQuery}
+                    onChange={(e) => {
+                        setfNameQuery(e.target.value)
+                        setIsSearch(true)
+                    }}
+                    name="roomNo"
+                    sx={{ width: '20rem', margin: '1rem 2rem' }}
+                    disabled={branch && !Boolean(Object.values(empVal)[0])? false : true}
+                    margin="none"
                 />
+                <_TextField
+                    label="Search By Last Name"
+                    type='text'
+                    value={lastNameQuery}
+                    onChange={(e) => {
+                        setlNameQuery(e.target.value)
+                        setIsSearch(true)
+                    }}
+                    name="roomNo"
+                    sx={{ width: '20rem', margin: '1rem 2rem' }}
+                    disabled={branch && !Boolean(Object.values(empVal)[0])? false : true}
+                    margin="none"
+                />
+                {!isSearch && <SearchEmployee />}
+                
             </Box>
 
             <div style={{ display: 'flex' }}>
-                <div style={{ height: 400, width: '100%' }}>
+                <div style={{ height: '80vh', width: '100%' }}>
                     <DataGrid
-                        rows={rows}
+                        rows={employees}
                         columns={columns}
-                        pageSize={5}
-                        rowsPerPageOptions={[5]}
                         checkboxSelection
                         disableColumnFilter
                         onSelectionModelChange={(...e) => setSelected(e[0])}
                         isRowSelectable={(item) => selected.length > 1 ? false : true}
-
-
+                        autoPageSize
                     />
                 </div>
 

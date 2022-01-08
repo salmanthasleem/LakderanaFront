@@ -1,66 +1,60 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import _TextField from "../../../components/auth/textField";
 import { DataGrid, } from '@mui/x-data-grid';
 import { Button, Typography, Modal, Box, TextField, Autocomplete } from "@mui/material";
-
+import api from "../../../api/api";
+import BranchField from "../../../components/branchField";
+import BeverageField from "../../../components/beveragesField";
+import { useSelector, useDispatch } from "react-redux";
+import BarAddItem from "../../../components/bar/addItemModal";
+import RestockItem from "../../../components/bar/restockModal";
+import { setModalOpen } from "../../../redux/slicers/addItemModalSlice";
+import { setRestockModalOpen, setParamsAsync } from "../../../redux/slicers/restockItem";
+import { CSVLink } from "react-csv";
 
 const columns = [
 
-    { field: 'id', headerName: 'ID', align: "center", width: 70 },
-    { field: 'name', headerName: 'Name', align: "center", width: 130 },
-    { field: 'roomNo', headerName: 'Room Number', type: 'number', align: "center", width: 130 },
+    { field: 'id', headerName: 'Item ID', align: "center", width: 100 },
+    { field: 'beverageId', headerName: 'Beverage Id', align: "center", width: 200 },
+    { field: 'branchId', headerName: 'Branch Id', align: "center", width: 100 },
+    { field: 'name', headerName: 'Name', align: "center", width: 200 },
+    { field: 'type', headerName: 'Type', align: "center", width: 200 },
     {
-        field: 'checkedIn',
-        headerName: 'Checked In Date',
-        type: 'date',
-        align: "center", width: 150,
+        field: 'quantity',
+        headerName: 'Quantity',
+        align: "center", width: 200,
     },
     {
-        field: 'lengthOfStay',
-        headerName: 'Length Of Stay(Nights)',
-        type: 'number',
-        align: "center", width: 90,
+        field: 'stock',
+        headerName: 'In-Stock',
+        align: "center", width: 200,
     },
     {
-        field: 'noOfAdults',
-        headerName: 'Number Of Adults',
-        type: 'date',
-        align: "center", width: 150,
+        field: 'cost',
+        headerName: 'Cost Per Unit',
+        align: "center", width: 200,
     },
     {
-        field: 'noOfChildren',
-        headerName: 'Number Of Children',
-        type: 'number',
-        align: "center", width: 170,
+        field: 'price',
+        headerName: 'Price Per Unit',
+        align: "center", width: 200,
     },
     {
-        field: 'status',
-        headerName: 'Status',
-        align: "center", width: 120,
+        field: 'isAvailable',
+        headerName: 'Availabiltiy',
+        align: "center", width: 100,
     },
     // {
-    //     field: 'fullName',
-    //     headerName: 'Full name',
-    //     description: 'This column has a value getter and is not sortable.',
-    //     sortable: false,
-    //     width: 160,
+    //     field: 'stockAvailability',
+    //     headerName: 'Status',
+    //     width: 250,
     //     valueGetter: (params) =>
     //         `${params.getValue(params.id, 'firstName') || ''} ${params.getValue(params.id, 'lastName') || ''
     //         }`,
     // },
 ];
 
-const rows = [
-    { id: 1, name: 'Snow', roomNo: 'Jon', checkedIn: 35, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 2, name: 'Lannister', roomNo: 'Cersei', checkedIn: 42, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 3, name: 'Lannister', roomNo: 'Jaime', checkedIn: 45, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 4, name: 'Stark', roomNo: 'Arya', checkedIn: 16, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 5, name: 'Targaryen', roomNo: 'Daenerys', checkedIn: 5, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 6, name: 'Melisandre', roomNo: null, checkedIn: 150, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 7, name: 'Clifford', roomNo: 'Ferrara', checkedIn: 44, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 8, name: 'Frances', roomNo: 'Rossini', checkedIn: 36, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 9, name: 'Roxie', roomNo: 'Harvey', checkedIn: 65, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-];
+
 
 const style = {
     position: 'absolute',
@@ -81,38 +75,102 @@ const style = {
 
 
 const Inventory = () => {
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
     const [selected, setSelected] = useState([])
-    const [open, setOpen] = useState(false);
-    const handleOpen = () => setOpen(true);
-    const handleClose = () => setOpen(false);
+    const [inventory, setInventory] = useState([])
+    const dispatch = useDispatch()
+    const beverage = useSelector(state => state.beverage)
+    const branchId = useSelector(state => state.branch.branchId)
+    const restockBarItem = useSelector(state => state.restockBarItem)
+    const reStockedStock = restockBarItem.itemParams.stock
+    const reStockedBranch = restockBarItem.itemParams.branchId
+    const name = beverage.name
+    const type = beverage.type
+    const price = beverage.price
+    const quantity = beverage.quantity
+    const cost = beverage.cost
+
+
+    const getItems = async (branchId) => {
+        try {
+            const response = await api.get("/bar/getStock/", {
+                params: {
+                    branchId: branchId || "",
+                    name: name || "",
+                    type: type || "",
+                    price: price || "",
+                    quantity: quantity || "",
+                    cost: cost || ""
+                }
+            })
+            const data = await response.data
+            const message = await data.message
+            const isAvailable = data.data.isAvailable
+            if (isAvailable) {
+                const rows = await data.data.data
+                const filter = rows.map(row => ({ id: row.barItemId, ...row }))
+                setInventory(filter)
+            } else {
+                setInventory([])
+            }
+        } catch (error) {
+            const data = await error.response.data.data
+            const isAvailable = data.isAvailable
+            if (!isAvailable) {
+                setInventory([])
+            }
+        }
+    }
+
+    const handleOpenAddItem = () => dispatch(setModalOpen(true))
+
+    const handleOpenRestock = () => dispatch(setRestockModalOpen(true))
+
+    const handleRow = ({ beverageId, stock, branchId, name, type, quantity }) => {
+        const params = { stock, branchId, itemId: beverageId, name, type, quantity }
+        dispatch(setParamsAsync(params))
+    }
+
+    useEffect(() => {
+        if (branchId) {
+            getItems(branchId)
+        }
+    }, [name, type, price, quantity])
+
+    useEffect(async () => {
+        const user = await window.localStorage.getItem("@user")
+        const userData = await JSON.parse(user)
+        const empStatus = await userData.empStatus
+        if (branchId || empStatus === "Owner") {
+            getItems(branchId)
+        }
+    }, [branchId])
+
+    useEffect(() => {
+        if (reStockedBranch && reStockedStock) {
+            getItems(reStockedBranch)
+        }
+    }, [reStockedBranch, reStockedStock])
+
+    useEffect(async () => {
+        const user = await window.localStorage.getItem("@user")
+        const data = JSON.parse(user)
+        const defaultBranchId = data.branchId
+        getItems(defaultBranchId)
+    }, [])
 
     return (
         <>
             <Box sx={{ display: 'flex', justifyContent: 'space-evenly', alignItems: 'center' }}>
-                <Autocomplete
-                    disablePortal
-                    options={["Branch 1", "Branch 2"]}
-                    renderInput={(params) => <TextField {...params} label="Search By Item" variant="standard" />}
-
-                    sx={{ width: 1 / 5 }}
-
-                />
-                <Autocomplete
-                    disablePortal
-                    options={["Branch 1", "Branch 2"]}
-                    renderInput={(params) => <TextField {...params} label="Search By Id" variant="standard" />}
-
-                    sx={{ width: 1 / 5 }}
-
+                <BranchField container={{ display: 'flex' }} sx={{ margin: '1rem' }} />
+                <BeverageField container={{ display: 'flex' }} sx={{ margin: '1rem' }} sx={{ width: '15rem', margin: '1rem' }}
+                    branchId={branchId}
                 />
             </Box>
 
             <div style={{ display: 'flex' }}>
-                <div style={{ height: 400, width: '100%' }}>
+                <div style={{ height: '70vh', width: '100%' }}>
                     <DataGrid
-                        rows={rows}
+                        rows={inventory}
                         columns={columns}
                         pageSize={5}
                         rowsPerPageOptions={[5]}
@@ -120,31 +178,21 @@ const Inventory = () => {
                         disableColumnFilter
                         onSelectionModelChange={(...e) => setSelected(e[0])}
                         isRowSelectable={(item) => selected.length > 1 ? false : true}
-
+                        onRowClick={({ row }) => handleRow(row)}
                     />
                 </div>
 
             </div>
 
             <div style={{ width: '100%', display: "flex", justifyContent: 'flex-start', alignItems: 'center', height: '4rem', marginLeft: '1rem' }}>
-                <Button variant="contained" color="primary" type='submit' size="large" sx={{ marginRight: 1 }} onClick={handleOpen}>Add Inventory</Button>
+                <Button variant="contained" color="primary" type='submit' size="large" sx={{ marginRight: 1 }} onClick={handleOpenAddItem}>Add Item</Button>
+                {selected.length > 0 && <Button variant="contained" color="primary" type='submit' size="large" sx={{ marginRight: 1 }} onClick={handleOpenRestock}>Restock Item</Button>}
+                {inventory &&
+                    <Button
+                        variant="contained" color="primary" type='button' size="large" sx={{ marginRight: 1 }} disabled={inventory.length > 0 ? false : true}><CSVLink data={inventory} style={{ textDecoration: 'none', color: 'white' }} >Download Table</CSVLink></Button>}
             </div>
-            <Modal
-                open={open}
-                onClose={handleClose}
-                aria-labelledby="modal-modal-title"
-                aria-describedby="modal-modal-description"
-            >
-                <Box sx={style}>
-                    <Typography id="modal-modal-title" variant="h6" component="h2">
-                        Are You Sure ?
-                    </Typography>
-                    <div style={{ width: '100%', display: 'flex', justifyContent: 'space-evenly' }} >
-                        <Button variant="contained" color="primary" type='submit' size="large" sx={{ marginRight: 1 }} >Yes</Button>
-                        <Button variant="contained" color="primary" type='submit' size="large" sx={{ marginRight: 1 }} >No</Button>
-                    </div>
-                </Box>
-            </Modal>
+            <BarAddItem />
+            <RestockItem />
         </>
     )
 }

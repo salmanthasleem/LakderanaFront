@@ -1,25 +1,68 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import _TextField from "../../../components/auth/textField"
 import { DataGrid } from '@mui/x-data-grid';
 import { Button, Typography, Modal, Box } from "@mui/material";
+import api from "../../../api/api";
+import { CSVDownload, CSVLink } from "react-csv";
 
 
+// {
+//     "id": 22,
+//     "branchId": 56,
+//     "roomId": 22,
+//     "customerId": 11,
+//     "checkIn": "2022-01-02T18:30:00.000Z",
+//     "checkOut": "2022-01-05T18:30:00.000Z",
+//     "pricePerNight": 20000,
+//     "noOfAdults": 3,
+//     "noOfChildren": 3,
+//     "Total": 60000,
+//     "lengthOfStay": 3,
+//     "name": "asdasfadgda",
+//     "mobileNo": "78482344848448",
+//     "identityId": "a48asda4gasgsd",
+//     "roomNo": 234,
+//     "isBooked": 1,
+//     "roomTypeId": 9
+//   }
 const columns = [
-
-    { field: 'id', headerName: 'ID', align: "center", width: 70 },
-    { field: 'name', headerName: 'Name', align: "center", width: 130 },
-    { field: 'roomNo', headerName: 'Room Number', type: 'number', align: "center", width: 130 },
+    { field: 'name', headerName: 'Name', align: "center", width: 200 },
+    { field: 'mobileNo', headerName: 'Mobile Number', align: "center", width: 200 },
+    { field: 'identityId', headerName: 'Identity(Passport/NIC)', align: "center", width: 150 },
+    { field: 'roomNo', headerName: 'Room Number', type: 'number', align: "center", width: 100 },
+    { field: 'id', headerName: 'ID', align: "center", width: 100 },
+    { field: 'branchId', headerName: 'Branch ID', align: "center", width: 100 },
+    { field: 'roomId', headerName: 'Room ID', align: "center", width: 100 },
+    { field: 'customerId', headerName: 'Customer ID', align: "center", width: 150 },
     {
-        field: 'checkedIn',
-        headerName: 'Checked In Date',
-        type: 'date',
-        align: "center", width: 150,
+        field: 'checkIn',
+        headerName: 'Check-In Date',
+        width: 150,
+        valueGetter: (params) => {
+            const row = params.row
+            return new Date(row.checkIn).toLocaleDateString()
+        }
     },
     {
-        field: 'lengthOfStay',
-        headerName: 'Length Of Stay(Nights)',
-        type: 'number',
-        align: "center", width: 90,
+        field: 'checkOut',
+        headerName: 'Check-Out Date',
+        width: 150,
+        valueGetter: (params) => {
+            const row = params.row
+            return new Date(row.checkOut).toLocaleDateString()
+        }
+    },
+    {
+        field: 'checkIn',
+        headerName: 'Checked In Date',
+        align: "center", width: 200,
+
+    },
+    {
+        field: 'checkOut',
+        headerName: 'Check Out Date',
+        align: "center", width: 200,
+
     },
     {
         field: 'noOfAdults',
@@ -31,36 +74,33 @@ const columns = [
         field: 'noOfChildren',
         headerName: 'Number Of Children',
         type: 'number',
-        align: "center", width: 170,
+        align: "center", width: 200,
+    },
+    { field: 'pricePerNight', headerName: 'Price Per Night', align: "center", width: 150 },
+    { field: 'Total', headerName: 'Total Price', align: "center", width: 150 },
+    {
+        field: 'lengthOfStay',
+        headerName: 'Length Of Stay(Days)',
+        type: 'number',
+        align: "center", width: 200,
+    },
+    {
+        field: 'isBooked',
+        headerName: 'Booked(bool)',
+        align: "center", width: 0,
+        hide: true
     },
     {
         field: 'status',
         headerName: 'Status',
-        align: "center", width: 120,
+        width: 150,
+        valueGetter: (params) => {
+            const row = params.row
+            return row.isBooked === 1 ? "In" : "Out"
+        }
     },
-    // {
-    //     field: 'fullName',
-    //     headerName: 'Full name',
-    //     description: 'This column has a value getter and is not sortable.',
-    //     sortable: false,
-    //     width: 160,
-    //     valueGetter: (params) =>
-    //         `${params.getValue(params.id, 'firstName') || ''} ${params.getValue(params.id, 'lastName') || ''
-    //         }`,
-    // },
 ];
 
-const rows = [
-    { id: 1, name: 'Snow', roomNo: 'Jon', checkedIn: 35, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 2, name: 'Lannister', roomNo: 'Cersei', checkedIn: 42, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 3, name: 'Lannister', roomNo: 'Jaime', checkedIn: 45, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 4, name: 'Stark', roomNo: 'Arya', checkedIn: 16, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 5, name: 'Targaryen', roomNo: 'Daenerys', checkedIn: 5, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 6, name: 'Melisandre', roomNo: null, checkedIn: 150, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 7, name: 'Clifford', roomNo: 'Ferrara', checkedIn: 44, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 8, name: 'Frances', roomNo: 'Rossini', checkedIn: 36, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 9, name: 'Roxie', roomNo: 'Harvey', checkedIn: 65, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-];
 
 const style = {
     position: 'absolute',
@@ -81,49 +121,129 @@ const style = {
 
 
 const InHotelCustomers = () => {
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
     const [selected, setSelected] = useState([])
     const [open, setOpen] = useState(false);
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
+    const [branchId, setBranchId] = useState("")
+    const [allCustomers, setAllCustomers] = useState([])
+    const [helper, setHelper] = useState("")
+    const [nameQuery, setNameQuery] = useState("")
+    const [roomNoQuery, setRoomNoQuery] = useState("")
+
+
+    useEffect(() => {
+        const user = window.localStorage.getItem("@user")
+        const data = JSON.parse(user)
+        const branchId = data.branchId
+        setBranchId(branchId)
+    }, [])
+
+    useEffect(() => {
+        getCustomers()
+    }, [branchId])
+
+
+    const getCustomers = async (name = "", roomNo = "") => {
+        if (branchId) {
+            try {
+                const response = await api.get("/manage/room/getBooked/", {
+                    params: {
+                        branchId: branchId,
+                        name: name,
+                        roomNo: roomNo
+                    }
+                })
+                const data = await response.data
+                const message = data.message
+                const rows = data.data.data
+                const isSuccess = data.data.isSuccess
+                if (isSuccess) {
+                    setAllCustomers(rows)
+                    setHelper(message)
+                    setTimeout(() => setHelper(""), 2000)
+                } else {
+                    setAllCustomers([])
+                    setHelper(message)
+                    setTimeout(() => setHelper(""), 2000)
+                }
+            } catch (error) {
+                if (error.response) {
+                    const data = error.response.data
+                    const message = data.message
+                    setAllCustomers([])
+                    setHelper(message)
+                } else {
+                    setAllCustomers([])
+                    setHelper("Something Went Wrong")
+                }
+                setTimeout(() => setHelper(""), 2000)
+            }
+        }
+    }
+
+    useEffect(() => {
+        getCustomers(nameQuery, roomNoQuery)
+    }, [nameQuery, roomNoQuery])
+
+
 
     return (
         <>
-            <_TextField
-                label="Search Customer"
-                name="customer"
-                pHolder="Search For Customers By Name"
-                type="search"
-                // onChange={props.onChange}
-                error={false}
-                // helper={}
-                margin='dense'
-                sx={{
-                    padding: 2
-                }}
-                variant="standard"
-                focused={true}
-            />
+            <Box sx={{ display: 'flex' }}>
+                <_TextField
+                    label="Search By Customer Name"
+                    name="customer"
+                    pHolder="Search For Customers By Name"
+                    type="search"
+                    onChange={(e) => setNameQuery(e.target.value)}
+                    value={nameQuery}
+                    error={false}
+                    // helper={}
+                    margin='dense'
+                    sx={{
+                        padding: 2
+                    }}
+                    variant="standard"
+                    focused={true}
+                />
+                <_TextField
+                    label="Search By Room No"
+                    name="roomNo"
+                    pHolder="Search For Customers By Name"
+                    type="search"
+                    onChange={(e) => setRoomNoQuery(e.target.value)}
+                    error={false}
+                    // helper={}
+                    margin='dense'
+                    sx={{
+                        padding: 2
+                    }}
+                    variant="standard"
+                    focused={true}
+                    value={roomNoQuery}
+                />
+            </Box>
             <div style={{ display: 'flex' }}>
-                <div style={{ height: 400, width: '100%' }}>
+                <div style={{ height: '70vh', width: '100%' }}>
                     <DataGrid
-                        rows={rows}
+                        rows={allCustomers}
                         columns={columns}
-                        pageSize={5}
-                        rowsPerPageOptions={[5]}
                         checkboxSelection
                         disableColumnFilter
                         onSelectionModelChange={(...e) => setSelected(e[0])}
                         isRowSelectable={(item) => selected.length > 1 ? false : true}
-
+                        autoPageSize
                     />
                 </div>
 
             </div>
 
             <div style={{ width: '100%', display: "flex", justifyContent: 'flex-start', alignItems: 'center', height: '4rem', marginLeft: '1rem' }}>
-                <Button variant="contained" color="primary" type='submit' size="large" sx={{ marginRight: 1 }} onClick={handleOpen}>Check Out Customer</Button>
+                <Button variant="contained" color="primary" type='submit' size="large" sx={{ marginRight: 1 }} disabled={selected.length > 0 ? false : true} onClick={handleOpen}>Check Out Customer</Button>
+                {allCustomers &&
+                    <Button
+                        variant="contained" color="primary" type='button' size="large" sx={{ marginRight: 1 }} disabled={allCustomers.length > 0 ? false : true}><CSVLink data={allCustomers} style={{ textDecoration: 'none', color: 'white' }} >Download Table</CSVLink></Button>}
             </div>
             <Modal
                 open={open}

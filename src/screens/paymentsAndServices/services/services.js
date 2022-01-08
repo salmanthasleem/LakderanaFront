@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { Button, Typography, Box, Divider, Switch, FormControlLabel, Autocomplete, TextField } from "@mui/material";
+import { Button, Box, Divider, Switch, FormControlLabel, Autocomplete, TextField, Typography } from "@mui/material";
 import { useFormik } from "formik";
 import * as Yup from 'yup';
 import _TextField from '../../../components/auth/textField'
-import CustomerRegistration from '../../customer/customerRegistration/customerRegistration'
-import SearchByCustomer from '../room/searchByCustomer'
+import CustomerDetailsSection from '../../../components/customerDetailsSections'
+import ConstructionIcon from '@mui/icons-material/Construction';
+import { useSelector } from 'react-redux'
 
 let minDate = new Date()
 let maxDate = new Date()
@@ -18,6 +19,9 @@ const Services = ({ index, value }) => {
         lunch: false,
         dinner: false
     });
+    const cVals = useSelector(state => state.cusAutoFill.cValues)
+    const cusName = cVals.cusName
+    const cusId = cVals.cusId
 
     const handleFood = (breakfast = food.breakfast, lunch = food.lunch, dinner = food.dinner) => {
         setFood({ breakfast, lunch, dinner })
@@ -47,11 +51,31 @@ const Services = ({ index, value }) => {
         onSubmit: val => console.log(val)
     })
 
+    const helpsAutoFill = {
+        name: formik.touched.name && formik.errors.name,
+        id: formik.touched.id && formik.errors.id,
+    }
+
+    const errsAutoFill = {
+        name: formik.touched.name && Boolean(formik.errors.name),
+        id: formik.touched.id && Boolean(formik.errors.id),
+    }
+
+    const onChangesAutoFill = {
+        name: () => formik.setFieldValue('name', cusName),
+        id: () => formik.setFieldValue('id', cusId)
+    }
+
+
     if (index !== value) return null
     return (
         <form
-            onSubmit={formik.handleSubmit}
+            onSubmit={(e) => e.preventDefault()}
         >
+            <Box sx={{ display: 'flex', width: 1, justifyContent: 'space-evenly', alignItems: 'center', backgroundColor: '#081627', color: 'white' }}>
+                <ConstructionIcon sx={{ fontSize: 100 }} />
+                <Typography component="h2" variant="h2" >Some Work To Be Done</Typography>
+            </Box>
             <Box
                 sx={{
                     display: 'flex',
@@ -75,9 +99,14 @@ const Services = ({ index, value }) => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-evenly', alignItems: 'center', width: '90%' }}>
                     {newCus &&
                         <>
-                            <Box sx={{ width: 1 / 3 }}>
-                                <SearchByCustomer />
-                            </Box>
+                            <CustomerDetailsSection
+                                helpers={{ helpsAutoFill }}
+                                errors={{ errsAutoFill }}
+                                onchanges={{ onChangesAutoFill }}
+                                width={1 / 3}
+                                newCus={false}
+                                oldCus={newCus}
+                            />
                             <Divider orientation="vertical" flexItem variant="fullWidth" sx={{ alignContent: 'space-evenly', margin: '0 5rem' }} />
                         </>
                     }

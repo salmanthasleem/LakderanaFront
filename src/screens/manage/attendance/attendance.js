@@ -1,68 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DataGrid, } from '@mui/x-data-grid';
-import { Button, Box } from "@mui/material";
+import { Button, Box, Typography } from "@mui/material";
 import _TextField from "../../../components/auth/textField";
 import QrReader from 'react-qr-scanner'
+import api from '../../../api/api'
 
 
 const columns = [
 
-    { field: 'id', headerName: 'ID', align: "center", width: 70 },
-    { field: 'name', headerName: 'Name', align: "center", width: 130 },
-    { field: 'roomNo', headerName: 'Room Number', type: 'number', align: "center", width: 130 },
+    { field: 'id', headerName: 'ID', align: "center", width: 100 },
+    { field: 'branchId', headerName: 'Branch ID', align: "center", width: 100 },
+    { field: 'firstName', headerName: 'First Name', align: "center", width: 200 },
+    { field: 'lastName', headerName: 'Last Name', type: 'number', align: "center", width: 200 },
     {
-        field: 'checkedIn',
-        headerName: 'Checked In Date',
-        type: 'date',
-        align: "center", width: 150,
+        field: 'fullName',
+        headerName: 'Full name',
+        sortable: false,
+        width: 300,
+        valueGetter: (params) =>
+            `${params.getValue(params.id, 'firstName') || ''} ${params.getValue(params.id, 'lastName') || ''
+            }`
+        ,
+
+
     },
     {
-        field: 'lengthOfStay',
-        headerName: 'Length Of Stay(Nights)',
-        type: 'number',
-        align: "center", width: 90,
+        field: 'email',
+        headerName: 'Email',
+        align: "center", width: 300
     },
     {
-        field: 'noOfAdults',
-        headerName: 'Number Of Adults',
-        type: 'date',
-        align: "center", width: 150,
-    },
-    {
-        field: 'noOfChildren',
-        headerName: 'Number Of Children',
-        type: 'number',
-        align: "center", width: 170,
+        field: 'userName',
+        headerName: 'User Name',
+        align: "center", width: 200
     },
     {
         field: 'status',
         headerName: 'Status',
-        align: "center", width: 120,
+        align: "center", width: 200
     },
-
-    // {
-    //     field: 'fullName',
-    //     headerName: 'Full name',
-    //     description: 'This column has a value getter and is not sortable.',
-    //     sortable: false,
-    //     width: 160,
-    //     valueGetter: (params) =>
-    //         `${params.getValue(params.id, 'firstName') || ''} ${params.getValue(params.id, 'lastName') || ''
-    //         }`,
-    // },
 ];
 
-const rows = [
-    { id: 1, name: 'Snow', roomNo: 'Jon', checkedIn: 35, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 2, name: 'Lannister', roomNo: 'Cersei', checkedIn: 42, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 3, name: 'Lannister', roomNo: 'Jaime', checkedIn: 45, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 4, name: 'Stark', roomNo: 'Arya', checkedIn: 16, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 5, name: 'Targaryen', roomNo: 'Daenerys', checkedIn: 5, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 6, name: 'Melisandre', roomNo: null, checkedIn: 150, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 7, name: 'Clifford', roomNo: 'Ferrara', checkedIn: 44, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 8, name: 'Frances', roomNo: 'Rossini', checkedIn: 36, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 9, name: 'Roxie', roomNo: 'Harvey', checkedIn: 65, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-];
 
 const style = {
     position: 'absolute',
@@ -87,29 +65,57 @@ const Attendance = () => {
     const [delay, setDelay] = useState(100)
     const [openQr, setQrDiv] = useState(false)
     const [attendance, setAttendance] = useState([])
+    const [allEmployees, setAllEmployees] = useState([])
     const [startMark, setStartMark] = useState(false)
+    const [helper, setHelper] = useState("")
+    const [marked, setMarked] = useState("")
+    const [branchId, setBranchId] = useState("")
+    const [confirm, setConfirm] = useState(false)
 
-    const handleMark = () => setStartMark(!startMark)
-
-    const handleScan = data => {
-        if (data) {
-            const text = data.text.split(",")
-            const object = {
-                id: text[0],
-                name: text[1],
-                roomNo: text[2],
-                checkedIn: text[3],
-                lengthOfStay: text[4],
-                noOfAdults: text[5],
-                noOfChildren: text[6],
-                status: text[7]
+    const handleMark = async () => {
+        if (confirm) {
+            const ids = attendance.map(emp => emp.id)
+            if (ids) {
+                try {
+                    const body = {
+                        attendance: ids,
+                        branchId: branchId
+                    }
+                    const response = await api.post("/hr/attendance/mark/", body)
+                    const isSuccess = response.data.data.isSuccess
+                    if (isSuccess) {
+                        setStartMark(false)
+                        setConfirm(false)
+                        setAttendance([])
+                        setHelper("")
+                        checkAttendance()
+                    }
+                    // console.log(response.data.data)
+                } catch (error) {
+                    //console.log(error.response.data.data)
+                    const isNotSuccess = error.response.data.data.isSuccess
+                    if (!isNotSuccess) {
+                        checkAttendance()
+                    }
+                }
+                setConfirm(false)
             }
-            let id = [];
-            attendance.forEach(element => {
-                id.push(element.id)
-            });
-            if (!id.includes(object.id)) {
-                setAttendance(prev => [...prev, object])
+        } else {
+            setConfirm(true)
+        }
+    }
+
+    const handleOpen = () => {
+        setStartMark(true)
+    }
+    const handleScan = id => {
+        if (id) {
+            if (id.text) {
+                const findOne = allEmployees.find(employee => id.text == employee.id)
+                if (!attendance.includes(findOne)) {
+                    console.log(findOne)
+                    setAttendance(prev => [...prev, findOne])
+                }
             }
         }
     }
@@ -117,43 +123,117 @@ const Attendance = () => {
         alert(err)
     }
 
+    const getEmployees = async () => {
+        try {
+            const response = await api.get("/manage/employee/searchEmployee/", {
+                params: {
+                    branchId: branchId
+                }
+            })
+            const data = await response.data.data
+            const isAvailable = data.isAvailable
+            if (isAvailable) {
+                setAllEmployees(data.rows)
+            } else {
+                setAllEmployees([])
+            }
+        } catch (error) {
+            const data = error.response.data.data
+            const isAvailable = data.isAvailable
+            if (isAvailable === false) {
+                setAllEmployees([])
+            }
+        }
+    }
+
+    const checkAttendance = async () => {
+        try {
+            const date = new Date().toISOString().split("T")[0]
+            const response = await api.get("/hr/attendance/get/", {
+                params: {
+                    branchId: branchId,
+                    date: date
+                }
+            })
+            const data = await response.data
+            const isSuccess = await data.data.isSuccess
+            const message = await data.message
+            if (typeof isSuccess === "boolean") {
+                setMarked(isSuccess)
+            }
+            setHelper(message)
+        } catch (error) {
+            const errData = error.response.data
+            const isSuccess = errData.data.isSuccess
+            const msg = errData.message
+            setHelper(msg)
+            if (typeof isSuccess === "boolean") {
+                setMarked(isSuccess)
+            }
+        }
+    }
+
+    useEffect(async () => {
+        const user = await window.localStorage.getItem("@user")
+        const branchId = await JSON.parse(user).branchId
+        setBranchId(branchId)
+
+    }, [])
+
+    useEffect(() => {
+        if (branchId) {
+            getEmployees()
+            checkAttendance()
+        }
+    }, [branchId])
+
+    console.log(allEmployees)
     return (
         <>
-            <Box sx={{ display: 'flex', justifyContent: 'space-evenly', alignItems: 'center' }}>
-            </Box>
-            <div style={{ display: 'flex' }}>
-                <div style={{ height: '80vh', width: '70%' }}>
-                    {!startMark && <Button variant="contained" color="primary" type='submit' size="large" sx={{ marginRight: 1 }} onClick={handleMark}>
+            <div style={{ display: 'flex', backgroundColor: !startMark ? '#081627' : null }}>
+                <div style={{ height: '80vh', width: !startMark ? '100%' : '70%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                    {!startMark && <Button variant="contained" color="secondary" type='submit' size="large" sx={{ margin: '2rem', height: '10rem', width: '90%', justifySelf: 'center', fontSize: 50 }} onClick={handleOpen}>
                         Mark Attendance For Today
                     </Button>}
-                    {startMark && <DataGrid
+                    {startMark && !marked && <DataGrid
                         rows={attendance}
                         columns={columns}
-                        pageSize={50}
-                        rowsPerPageOptions={[50]}
                         checkboxSelection
                         disableColumnFilter
                         onSelectionModelChange={(...e) => setSelected(e[0])}
                         isRowSelectable={(item) => selected.length > 1 ? false : true}
+                        sx={{ width: 1 }}
+                        autoPageSize
 
                     />}
+                    {
+                        startMark && marked && <Typography component="h4" variant="h5" >{helper}</Typography>
+                    }
 
                 </div>
-                {openQr && <QrReader
-                    delay={delay}
-                    style={{
-                        height: "240",
-                        width: "320"
-                    }}
-                    onError={handleError}
-                    onScan={handleScan}
-                    facingMode="user"
-                />}
+                {openQr && <Box sx={{ display: 'flex', flexDirection: 'column', width: '50rem', height: '40rem', justifyContent: 'center', alignItems: 'center', alignContent: 'center' }}>
+                    <Box sx={{ width: '45rem', height: '35rem', marginBottom: '2rem' }}>
+                        {openQr && <QrReader
+                            delay={delay}
+                            style={{
+                                height: "35rem",
+                                width: "45rem"
+                            }}
+                            onError={handleError}
+                            onScan={handleScan}
+                            facingMode="user"
+                        />}
+                    </Box>
+                    {
+                        startMark && !marked && <Typography component="h4" variant="h5" >{helper}</Typography>
+                    }
+                </Box>}
             </div>
 
             <div style={{ width: '100%', display: "flex", justifyContent: 'flex-start', alignItems: 'center', height: '4rem', marginLeft: '1rem' }}>
-                <Button variant="contained" color="primary" type='submit' size="large" sx={{ marginRight: 1 }} onClick={handleMark}>Complete Attendance</Button>
-                <Button variant="contained" color="primary" type='submit' size="large" sx={{ marginRight: 1 }} onClick={() => setQrDiv(!openQr)}>{openQr ? "Close Scanner" : "Open Scanner"}</Button>
+                {!marked && startMark && <Button variant="contained" color={confirm ? "warning" : "primary"} type='button' size="large" sx={{ marginRight: 1 }} onClick={() => handleMark()}>{confirm ? "Confirm Complete Attendance" : "Complete Attendance"}</Button>}
+                {confirm && <Button variant="contained" color="error" type='button' size="large" sx={{ marginRight: 1 }} onClick={() => setConfirm(false)}>Cancel</Button>}
+                {startMark && !marked && <Button variant="contained" color="primary" type='submit' size="large" sx={{ marginRight: 1 }} onClick={() => setQrDiv(!openQr)}>{openQr ? "Close Scanner" : "Open Scanner"}</Button>}
             </div>
         </>
     )

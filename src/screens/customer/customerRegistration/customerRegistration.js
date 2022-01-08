@@ -1,26 +1,28 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@mui/material";
 import { useFormik } from "formik";
 import * as Yup from 'yup';
 import _TextField from '../../../components/auth/textField'
+import api from '../../../api/api'
+import CustomerRegistrationFields from "../../../components/customerRegistrationFields";
+import { Typography } from '@mui/material'
 
 let minDate = new Date()
 let maxDate = new Date()
 minDate.setFullYear(minDate.getFullYear() - 70, 0, 1)
 maxDate.setFullYear(maxDate.getFullYear() - 18, 0, 1)
+const phoneRegExp = /^((\\+[1-9]{1,4}[ \\-]*)|(\\([0-9]{2,3}\\)[ \\-]*)|([0-9]{2,4})[ \\-]*)*?[0-9]{3,4}?[ \\-]*[0-9]{3,4}?$/
 
 const CustomerRegistration = ({ index, value, width }) => {
+    const [helper, setHelper] = useState("")
 
     const customerRegisterSchema = Yup.object({
         name: Yup.string('Enter Your Name')
             .min(2, 'Too Short!')
             .max(60, 'Too Long!')
             .required('Required'),
-        mobile: Yup.number('Enter A Mobile Phone Number')
-            .min(9, "Enter A Valid Mobile Number")
-            .max(15, "Enter A Valid Mobile Number")
-            .required("Date Of Birth Required"),
-        id: Yup.string('Enter An NIC ID Or Passport ID')
+        mobile: Yup.string().matches(phoneRegExp, 'Phone number is not valid'),
+        identity: Yup.string('Enter An NIC ID Or Passport ID')
             .min(7, "Too Short")
             .required("Enter An NIC ID Or Passport ID"),
     })
@@ -29,16 +31,58 @@ const CustomerRegistration = ({ index, value, width }) => {
         initialValues: {
             name: "",
             mobile: "",
-            id: ""
+            identity: ""
         },
         validationSchema: customerRegisterSchema,
-        onSubmit: val => console.log(val)
+        onSubmit: val => handleRegister(formik.values)
     })
+
+    const handleRegister = async (values) => {
+        try {
+            const req = {
+                name: values.name,
+                mobileNo: values.mobile,
+                identityId: values.identity,
+                branchId: 56
+            }
+
+            const response = await api.post("/customer/register/", req)
+            setHelper(response.data.message)
+            formik.resetForm()
+        } catch (error) {
+            if (error.response.data) {
+                setHelper(error.response.data.message)
+            }
+        }
+
+        setTimeout(() => setHelper(""), 3000)
+    }
+    const helps = {
+        name: formik.touched.name && formik.errors.name,
+        mobile: formik.touched.mobile && formik.errors.mobile,
+        identity: formik.touched.identity && formik.errors.identity,
+    }
+
+    const errs = {
+        name: formik.touched.name && Boolean(formik.errors.name),
+        mobile: formik.touched.mobile && Boolean(formik.errors.mobile),
+        identity: formik.touched.identity && Boolean(formik.errors.identity),
+    }
+
+    const vals = {
+        name: formik.values.name,
+        mobile: formik.values.mobile,
+        identity: formik.values.identity
+    }
+
 
     if (index !== value) return null
     return (
         <form
-            onSubmit={formik.handleSubmit}
+            onSubmit={(e) => {
+                e.preventDefault()
+                formik.handleSubmit()
+            }}
             style={{
                 display: 'flex',
                 width: width,
@@ -49,40 +93,13 @@ const CustomerRegistration = ({ index, value, width }) => {
                 justifyContent: 'space-evenly'
             }}
         >
-            <_TextField
-                label="Name"
-                pHolder="Name"
-                required
-                type="text"
-                error={formik.touched.name && Boolean(formik.errors.name)}
-                helper={formik.touched.name && formik.errors.name}
-                value={formik.values.name}
-                onChange={formik.handleChange}
-                name="name"
+            <CustomerRegistrationFields
+                helpers={helps}
+                errors={errs}
+                values={vals}
+                onChanges={formik.handleChange}
             />
-            <_TextField
-                label="Mobile Number"
-                pHolder="947XXXXXXXX / Foreign Mobile Number"
-                required
-                type='number'
-                error={formik.touched.mobile && Boolean(formik.errors.mobile)}
-                helper={formik.touched.mobile && formik.errors.mobile}
-                shrink={true}
-                value={formik.values.mobile}
-                onChange={formik.handleChange}
-                name="mobile"
-            />
-            <_TextField
-                label="ID/Passport No"
-                pHolder="XXXXXXXXXV / XXXXXXXXXX / NXXXXXXX"
-                required
-                type="text"
-                error={formik.touched.id && Boolean(formik.errors.id)}
-                helper={formik.touched.id && formik.errors.id}
-                value={formik.values.id}
-                onChange={formik.handleChange}
-                name="id"
-            />
+            <Typography component="h4" variant="body1">{helper}</Typography>
             <Button variant="contained" fullWidth type='submit' >Register Customer</Button>
         </form>
     )

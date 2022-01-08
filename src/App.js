@@ -17,6 +17,9 @@ import ManageBranches from './sections/manager/manageBranch';
 import ManageEmployee from './sections/manager/manageEmployee';
 import ManageRooms from './sections/manager/manageRooms';
 import Statistics from './sections/manager/statistics';
+import CustomerFrontBoard from './screens/dashboards/customer'
+import PaymentsFrontBoard from './screens/dashboards/payments'
+import BarFrontBoard from './screens/dashboards/barFB'
 
 import CustomerInquiry from './screens/customer/customerInquiry/customerInquiry';
 import CustomerRegistration from './screens/customer/customerRegistration/customerRegistration';
@@ -44,6 +47,8 @@ import ViewBranches from './screens/manage/branches/viewBranches';
 import BarStatsDaily from './screens/statistics/bar/dailyStats';
 import AttendanceStats from './screens/statistics/attendanceStats';
 import IncomeStats from './screens/statistics/income';
+import Protector from './components/auth/protector'
+import UnderConstruction from './components/underConstruction'
 
 function App() {
   return (
@@ -55,29 +60,46 @@ function App() {
               <Route path="/" element={<Auth />} />
               <Route
                 path="/protected"
-                element={<Dashboard />}
+                element={
+                  <Protector>
+                    <Dashboard />
+                  </Protector>
+                }
               >
 
                 <Route path="CustomerHandling" element={<CustomerHandling />}>
                   <Route path="CustomerInquiry" element={<CustomerInquiry />} />
                   <Route path="CustomerRegistration" element={<CustomerRegistration width={'40%'} />} />
                   <Route path="InHotelCustomers" element={<InHotelCustomers />} />
-                  <Route path="*" element={<CustomerRegistration width={'40%'} />} />
-                  <Route path="" element={<CustomerRegistration width={'40%'} />} />
+                  <Route path="*" element={<CustomerFrontBoard />} />
+                  <Route path="" element={<CustomerFrontBoard />} />
+                  {/* <Route path="*" element={<CustomerRegistration width={'40%'} />} />
+                  <Route path="" element={<CustomerRegistration width={'40%'} />} /> */}
                 </Route>
 
                 <Route path="PaymentsAndServices" element={<PaymentAndServices />}>
                   <Route path="ReserveRoom" element={<ReserveRoom />} />
                   <Route path="Services" element={<Services />} />
-                  <Route path="*" element={<ReserveRoom />} />
-                  <Route path="" element={<ReserveRoom />} />
+                  <Route path="*" element={<PaymentsFrontBoard />} />
+                  <Route path="" element={<PaymentsFrontBoard />} />
+                  {/* <Route path="*" element={<ReserveRoom />} />
+                  <Route path="" element={<ReserveRoom />} /> */}
                 </Route>
 
+                <Route path="Statistics" element={<Statistics />}>
+                  <Route path="BarStatsDaily" element={<BarStatsDaily />} />
+                  <Route path="AttendanceStats" element={<AttendanceStats />} />
+                  <Route path="IncomeStats" element={<IncomeStats />} />
+                  <Route path="*" element={<UnderConstruction subText="Navigate To Other Sections By Clicking One Of The Item/s On The Top Navigation Bar" text="Other General Statistics Will Be Coming Up Here...." />} />
+                  <Route path="" element={<UnderConstruction subText="Navigate To Other Sections By Clicking One Of The Item/s On The Top Navigation Bar" text="Other General Statistics Will Be Coming Up Here...." />} />
+                </Route>
                 <Route path="Bar" element={<Bar />}>
                   <Route path="FrontDesk" element={<FrontDesk />} />
                   <Route path="Inventory" element={<Inventory />} />
-                  <Route path="*" element={<FrontDesk />} />
-                  <Route path="" element={<FrontDesk />} />
+                  <Route path="*" element={<BarFrontBoard />} />
+                  <Route path="" element={<BarFrontBoard />} />
+                  {/* <Route path="*" element={<FrontDesk />} />
+                  <Route path="" element={<FrontDesk />} /> */}
                 </Route>
 
                 <Route path="Attendance" element={<AttendanceDashBoard />}>
@@ -88,38 +110,35 @@ function App() {
                 <Route path="ManageStaff" element={<Employee />}>
                   <Route path="ConfigureSalary" element={<ConfigureSalary />} />
                   <Route path="EmployeeDetails" element={<EmployeeDetails />} />
-                  <Route path="*" element={<ConfigureSalary />} />
-                  <Route path="" element={<ConfigureSalary />} />
+                  <Route path="*" element={<UnderConstruction subText="Navigate To Other Sections By Clicking One Of The Item/s On The Top Navigation Bar" text="Staff Statistics Is Coming Up Here...." />} />
+                  <Route path="" element={<UnderConstruction subText="Navigate To Other Sections By Clicking One Of The Item/s On The Top Navigation Bar" text="Staff Statistics Is Coming Up Here...." />} />
                 </Route>
 
                 <Route path="ManageRooms" element={<ManageRooms />}>
                   <Route path="AddRoom" element={<AddRoom />} />
                   <Route path="ViewRooms" element={<ViewRooms />} />
-                  <Route path="*" element={<AddRoom />} />
-                  <Route path="" element={<AddRoom />} />
+                  <Route path="*" element={<UnderConstruction subText="Navigate To Other Sections By Clicking One Of The Item/s On The Top Navigation Bar" text="Rooms Dashboard Is Coming Up Here...." />} />
+                  <Route path="" element={<UnderConstruction subText="Navigate To Other Sections By Clicking One Of The Item/s On The Top Navigation Bar" text="Rooms Dashboard Is Coming Up Here...." />} />
                 </Route>
 
                 <Route path="ManageEmployees" element={<ManageEmployee />}>
                   <Route path="AddEmployee" element={<AddEmployee />} />
-                  <Route path="*" element={<AddEmployee />} />
-                  <Route path="" element={<AddEmployee />} />
+                  <Route path="*" element={<UnderConstruction subText="Navigate To Other Sections By Clicking One Of The Item/s On The Top Navigation Bar" text="Employee Dashboard Is Coming Up Here...." />} />
+                  <Route path="" element={<UnderConstruction subText="Navigate To Other Sections By Clicking One Of The Item/s On The Top Navigation Bar" text="Employee Dashboard Is Coming Up Here...." />} />
                 </Route>
 
                 <Route path="ManageBranches" element={<ManageBranches />}>
                   <Route path="AddBranch" element={<AddBranch />} />
                   <Route path="ViewBranches" element={<ViewBranches />} />
-                  <Route path="*" element={<AddBranch />} />
-                  <Route path="" element={<AddBranch />} />
+                  <Route path="*" element={<UnderConstruction subText="Navigate To Other Sections By Clicking One Of The Item/s On The Top Navigation Bar" text="Hotel Branches Dashboard Is Coming Up Here...." />} />
+                  <Route path="" element={<UnderConstruction subText="Navigate To Other Sections By Clicking One Of The Item/s On The Top Navigation Bar" text="Hotel Branches Dashboard Is Coming Up Here...." />} />
                 </Route>
+                <Route path="*" element={<UnderConstruction text="Hmmm.... Not Sure If This Is The Right Place" />} />
+                <Route path="" element={<UnderConstruction text="Hmmm.... Not Sure If This Is The Right Place" />} />
 
-                <Route path="Statistics" element={<Statistics />}>
-                  <Route path="BarStatsDaily" element={<BarStatsDaily />} />
-                  <Route path="AttendanceStats" element={<AttendanceStats />} />
-                  <Route path="IncomeStats" element={<IncomeStats />} />
-                  <Route path="*" element={<AttendanceStats />} />
-                  <Route path="" element={<AttendanceStats />} />
-                </Route>
               </Route>
+              <Route path="*" element={<UnderConstruction text="Hmmm.... Not Sure If This Is The Right Place" />} />
+              <Route path="" element={<UnderConstruction text="Hmmm.... Not Sure If This Is The Right Place" />} />
             </Route>
           </Routes>
         </AuthProvider>

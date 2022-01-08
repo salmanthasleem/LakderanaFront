@@ -25,6 +25,8 @@ const _TextField = (props) => {
             focused={props.focused}
             disabled={props.disabled}
             defaultValue={props.default}
+            rows={props.rows}
+            multiline={props.multiline}
         />
     )
 }

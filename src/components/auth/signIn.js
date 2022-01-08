@@ -3,8 +3,10 @@ import { Button } from "@mui/material";
 import { useFormik } from "formik";
 import * as Yup from 'yup'
 import _TextField from './textField'
+import useAuth from "../../hooks/useAuth";
 
 const SignIn = ({ index, value, navigate }) => {
+    const auth = useAuth()
 
     const loginSchema = Yup.object({
         username: Yup.string('Enter A Username')
@@ -21,8 +23,13 @@ const SignIn = ({ index, value, navigate }) => {
             password: '',
         },
         validationSchema: loginSchema,
-        onSubmit: val => navigate("/protected")
+        onSubmit: val => handleLogin(formik.values)
     })
+
+    const handleLogin = (values) => {
+        const req = { userName: values.username, password: values.password }
+        auth.signIn(req)
+    }
 
     if (index !== value) return null
     return (
@@ -36,7 +43,10 @@ const SignIn = ({ index, value, navigate }) => {
                 alignItems: 'center',
                 justifyContent: 'space-evenly'
             }}
-            onSubmit={formik.handleSubmit}
+            onSubmit={(e) => {
+                e.preventDefault()
+                formik.handleSubmit()
+            }}
         >
             <_TextField
                 label="Username"

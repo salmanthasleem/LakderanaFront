@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
@@ -8,6 +8,7 @@ import theme from '../../Theme'
 import { Outlet } from 'react-router'
 import Header from './header';
 import Content from './content';
+import useAuth from '../../hooks/useAuth';
 
 
 const drawerWidth = 256;
@@ -15,11 +16,16 @@ const drawerWidth = 256;
 const Dashboard = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
     const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
-
+    const auth = useAuth()
+    const [userVals, setUserVals] = useState(null)
     const handleDrawerToggle = () => {
-        console.log("asdasda")
         setMobileOpen(!mobileOpen);
     };
+
+    useEffect(async () => {
+        const data = await auth.userData
+        setUserVals(data)
+    }, [auth.userData])
 
 
     return (

@@ -1,43 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import _TextField from "../../../components/auth/textField";
 import { DataGrid, } from '@mui/x-data-grid';
 import { Box, TextField, Autocomplete } from "@mui/material";
+import api from "../../../api/api";
 
 
 const columns = [
 
-    { field: 'id', headerName: 'ID', align: "center", width: 70 },
-    { field: 'name', headerName: 'Name', align: "center", width: 130 },
-    { field: 'roomNo', headerName: 'Room Number', type: 'number', align: "center", width: 130 },
-    {
-        field: 'checkedIn',
-        headerName: 'Checked In Date',
-        type: 'date',
-        align: "center", width: 150,
-    },
-    {
-        field: 'lengthOfStay',
-        headerName: 'Length Of Stay(Nights)',
-        type: 'number',
-        align: "center", width: 90,
-    },
-    {
-        field: 'noOfAdults',
-        headerName: 'Number Of Adults',
-        type: 'date',
-        align: "center", width: 150,
-    },
-    {
-        field: 'noOfChildren',
-        headerName: 'Number Of Children',
-        type: 'number',
-        align: "center", width: 170,
-    },
-    {
-        field: 'status',
-        headerName: 'Status',
-        align: "center", width: 120,
-    },
+    { field: 'id', headerName: 'ID', align: "center", width: 250, headerAlign: "center" },
+    { field: 'branchName', headerName: 'Branch Name', align: "center", width: 400, headerAlign: "center" },
+    { field: 'location', headerName: 'Branch Location', type: 'number', align: "center", width: 400, headerAlign: "center" },
     // {
     //     field: 'fullName',
     //     headerName: 'Full name',
@@ -48,18 +20,6 @@ const columns = [
     //         `${params.getValue(params.id, 'firstName') || ''} ${params.getValue(params.id, 'lastName') || ''
     //         }`,
     // },
-];
-
-const rows = [
-    { id: 1, name: 'Snow', roomNo: 'Jon', checkedIn: 35, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 2, name: 'Lannister', roomNo: 'Cersei', checkedIn: 42, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 3, name: 'Lannister', roomNo: 'Jaime', checkedIn: 45, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 4, name: 'Stark', roomNo: 'Arya', checkedIn: 16, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 5, name: 'Targaryen', roomNo: 'Daenerys', checkedIn: 5, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 6, name: 'Melisandre', roomNo: null, checkedIn: 150, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 7, name: 'Clifford', roomNo: 'Ferrara', checkedIn: 44, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 8, name: 'Frances', roomNo: 'Rossini', checkedIn: 36, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 9, name: 'Roxie', roomNo: 'Harvey', checkedIn: 65, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
 ];
 
 const style = {
@@ -82,32 +42,72 @@ const style = {
 
 const ViewBranches = () => {
     const [selected, setSelected] = useState([])
+    const [branches, setBranches] = useState([])
+    const [helper, setHelper] = useState("")
+    const [branchName, setBranchName] = useState("")
+    const [location, setLocation] = useState("")
+
+    const getBranches = async (name = "", location = "") => {
+        try {
+            const response = await api.get("/branch/getAll/", {
+                params: {
+                    branchName: name,
+                    location: location
+                }
+            })
+            const data = await response.data
+            const rows = data.data
+            setBranches(rows)
+            setHelper(data.message)
+            setTimeout(() => setHelper(""), 2000)
+        } catch (error) {
+            const data = error.response.data
+            setBranches([])
+            setHelper(data.message)
+            setTimeout(() => setHelper(""), 2000)
+        }
+    }
+    useEffect(() => {
+        getBranches(branchName, location)
+    }, [branchName, location])
+
 
     return (
         <>
             <Box sx={{ display: 'flex', justifyContent: 'space-evenly', alignItems: 'center', marginBottom: '2rem' }}>
-                <Autocomplete
-                    disablePortal
-                    options={["Branch 1", "Branch 2"]}
-                    renderInput={(params) => <TextField {...params} label="Location" variant="standard" />}
-
-                    sx={{ width: 1 / 5 }}
-
+                <_TextField
+                    label="Search By Branch Name"
+                    pHolder="0"
+                    type='text'
+                    value={branchName}
+                    onChange={(e) => setBranchName(e.target.value)}
+                    name="branchName"
+                    margin="none"
+                    sx={{ margin: '1rem' }}
+                />
+                <_TextField
+                    label="Search By Branch Location"
+                    pHolder="0"
+                    type='text'
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    name="location"
+                    margin="none"
+                    sx={{ margin: '1rem' }}
                 />
             </Box>
 
             <div style={{ display: 'flex' }}>
-                <div style={{ height: '80vh', minWidth: '60%', margin: 'auto' }}>
+                <div style={{ height: '80vh', minWidth: '50%', margin: 'auto' }}>
                     <DataGrid
-                        rows={rows}
+                        rows={branches}
                         columns={columns}
-                        pageSize={5}
-                        rowsPerPageOptions={[5]}
                         checkboxSelection
                         disableColumnFilter
                         onSelectionModelChange={(...e) => setSelected(e[0])}
                         isRowSelectable={(item) => selected.length > 1 ? false : true}
-
+                        autoPageSize
+                        sx={{ fontSize: 20 }}
                     />
                 </div>
 

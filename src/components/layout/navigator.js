@@ -7,17 +7,18 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import HomeIcon from '@mui/icons-material/Home';
 import PeopleIcon from '@mui/icons-material/People';
-import DnsRoundedIcon from '@mui/icons-material/DnsRounded';
-import PermMediaOutlinedIcon from '@mui/icons-material/PhotoSizeSelectActual';
-import PublicIcon from '@mui/icons-material/Public';
-import SettingsEthernetIcon from '@mui/icons-material/SettingsEthernet';
-import SettingsInputComponentIcon from '@mui/icons-material/SettingsInputComponent';
-import TimerIcon from '@mui/icons-material/Timer';
-import SettingsIcon from '@mui/icons-material/Settings';
-import PhonelinkSetupIcon from '@mui/icons-material/PhonelinkSetup';
+import PaymentIcon from '@mui/icons-material/Payment';
+import LocalBarIcon from '@mui/icons-material/LocalBar';
+import AnalyticsIcon from '@mui/icons-material/Analytics';
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
+import RoomPreferencesIcon from '@mui/icons-material/RoomPreferences';
+import EngineeringIcon from '@mui/icons-material/Engineering';
+import { Typography } from '@mui/material';
 import { useNavigate } from 'react-router';
+import { useEffect, useState } from 'react';
+import { level } from '../../helpers/accessLevel'
+import useAuth from '../../hooks/useAuth'
 
 const categories = [
     {
@@ -28,30 +29,24 @@ const categories = [
                 icon: <PeopleIcon />,
                 active: true,
             },
-            { id: 'Payments And Services', icon: <DnsRoundedIcon /> },
-            { id: 'Bar', icon: <PermMediaOutlinedIcon /> },
-            // { id: 'Hosting', icon: <PublicIcon /> },
-            // { id: 'Functions', icon: <SettingsEthernetIcon /> },
-            // {
-            //     id: 'Machine learning',
-            //     icon: <SettingsInputComponentIcon />,
-            // },
+            { id: 'Payments And Services', icon: <PaymentIcon /> },
+            { id: 'Bar', icon: <LocalBarIcon /> },
         ],
     },
     {
         id: 'Human Resource Staff',
         children: [
-            { id: 'Attendance', icon: <SettingsIcon /> },
-            { id: 'Manage Staff', icon: <TimerIcon /> },
-            // { id: 'Test Lab', icon: <PhonelinkSetupIcon /> },
+            { id: 'Attendance', icon: <PeopleIcon /> },
+            { id: 'Manage Staff', icon: <ManageAccountsIcon /> },
         ],
     },
     {
-        id: 'Manager',
+        id: 'Manager / Owner',
         children: [
-            { id: 'Manage Rooms', icon: <SettingsIcon /> },
-            { id: 'Manage Employees', icon: <TimerIcon /> },
-            { id: 'Statistics', icon: <PhonelinkSetupIcon /> },
+            { id: 'Manage Rooms', icon: <RoomPreferencesIcon /> },
+            { id: 'Manage Employees', icon: <EngineeringIcon /> },
+            { id: 'Manage Branches', icon: <RoomPreferencesIcon /> },
+            { id: 'Statistics', icon: <AnalyticsIcon /> },
         ],
     },
 ];
@@ -74,8 +69,11 @@ const itemCategory = {
 export default function Navigator(props) {
     const navigate = useNavigate()
     const { ...other } = props;
+    const [select, setSelect] = useState(0)
 
-    const [select, setSelect] = React.useState(0)
+    const auth = useAuth()
+
+    const empStatus = auth.userData.empStatus
 
     const handleClick = (childId, i) => {
         setSelect(childId + i)
@@ -83,29 +81,74 @@ export default function Navigator(props) {
         navigate(`/protected/${route}`)
     }
 
+    const whichStatus = (status) => {
+        switch (status) {
+            case 'Staff':
+                return 'Employee'
+                break;
+            case 'Human Resource Staff':
+                return 'HR Staff'
+                break;
+            case 'Manager / Owner':
+                return 'Manager'
+                break;
+            case 'Assistant Manager':
+                return 'HR Staff'
+                break;
+            case 'Manager':
+                return 'Manager'
+                break;
+            case 'Owner':
+                return 'Owner'
+                break;
+            case 'HR Staff':
+                return 'HR Staff'
+                break;
+            default:
+                return 1000
+                break
+        }
+    }
+
     return (
         <Drawer variant="permanent" {...other}>
             <List disablePadding>
-                <ListItem sx={{ ...item, ...itemCategory, fontSize: 22, color: '#fff' }}>
-                    Lakderana
+                <ListItem sx={{ ...item, ...itemCategory, fontSize: 22, color: '#fff', display: 'flex', justifyContent: 'space-evenly' }}>
+                    <img
+                        src="/hotel.png"
+                        style={{ height: '10rem' }}
+                    />
                 </ListItem>
-                {categories.map(({ id, children }) => (
-                    <Box key={id} sx={{ bgcolor: '#101F33' }}>
-                        <ListItem sx={{ py: 2, px: 3 }}>
-                            <ListItemText sx={{ color: '#fff' }}>{id}</ListItemText>
-                        </ListItem>
-                        {children.map(({ id: childId, icon, active }, i) => (
-                            <ListItem disablePadding key={childId}>
-                                <ListItemButton selected={select === childId + i} sx={item} onClick={() => handleClick(childId, i)}>
-                                    <ListItemIcon>{icon}</ListItemIcon>
-                                    <ListItemText>{childId}</ListItemText>
-                                </ListItemButton>
-                            </ListItem>
-                        ))}
+                {categories.map(({ id, children }) => {
+                    const whichLvl = level.get(whichStatus(id))
+                    const empLvl = level.get(whichStatus(empStatus))
 
-                        <Divider sx={{ mt: 2 }} />
-                    </Box>
-                ))}
+                    console.log(empLvl, whichLvl)
+                    if (empLvl === whichLvl || empLvl === 1) {
+                        return (
+                            <Box key={id} sx={{ bgcolor: '#101F33' }}>
+                                <ListItem sx={{ py: 2, px: 3 }}>
+                                    <ListItemText sx={{ color: '#fff' }}>{id}</ListItemText>
+                                </ListItem>
+                                {children.map(({ id: childId, icon, active }, i) => {
+                                    return (
+                                        <ListItem disablePadding key={childId}>
+                                            <ListItemButton selected={select === childId + i} sx={item} onClick={() => handleClick(childId, i)}>
+                                                <ListItemIcon>{icon}</ListItemIcon>
+                                                <ListItemText>{childId}</ListItemText>
+                                            </ListItemButton>
+                                        </ListItem>
+                                    )
+                                }
+
+                                )}
+
+                                <Divider sx={{ mt: 2 }} />
+                            </Box>
+                        )
+                    }
+                    return null
+                })}
             </List>
         </Drawer>
     );

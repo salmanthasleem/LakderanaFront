@@ -1,66 +1,51 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import _TextField from "../../components/auth/textField";
 import { DataGrid, } from '@mui/x-data-grid';
-import { Box, TextField, Autocomplete } from "@mui/material";
-
+import { Box, FormControlLabel, Switch } from "@mui/material";
+import BranchField from "../../components/branchField";
+import { useSelector } from "react-redux";
+import api from "../../api/api";
 
 const columns = [
-
-    { field: 'id', headerName: 'ID', align: "center", width: 70 },
-    { field: 'name', headerName: 'Name', align: "center", width: 130 },
-    { field: 'roomNo', headerName: 'Room Number', type: 'number', align: "center", width: 130 },
     {
-        field: 'checkedIn',
-        headerName: 'Checked In Date',
+        headerAlign: "center",
+        field: 'id', headerName: 'ID', align: "center", width: 200
+    },
+    {
+        headerAlign: "center",
+        field: 'firstName', headerName: 'First Name', align: "center", width: 350
+    },
+    {
+        headerAlign: "center",
+        field: 'lastName', headerName: 'Last Name', align: "center", width: 350
+    },
+    {
+        headerAlign: "center",
+        field: 'email', headerName: 'Email', align: "center", width: 350
+    },
+    {
+        headerAlign: "center",
+        field: 'parsedDate',
+        headerName: 'Date Of Birth',
+        align: 'center',
+        width: 250,
+        valueGetter: (params) =>
+            params.row.dob ? new Date(params.row.dob).toLocaleDateString() : null
+    },
+    {
+        headerAlign: "center",
+        field: 'status', headerName: 'Level', align: "center", width: 350
+    },
+    {
+        headerAlign: "center",
+        field: 'dob',
+        headerName: 'Date',
         type: 'date',
         align: "center", width: 150,
+        hide: true
     },
-    {
-        field: 'lengthOfStay',
-        headerName: 'Length Of Stay(Nights)',
-        type: 'number',
-        align: "center", width: 90,
-    },
-    {
-        field: 'noOfAdults',
-        headerName: 'Number Of Adults',
-        type: 'date',
-        align: "center", width: 150,
-    },
-    {
-        field: 'noOfChildren',
-        headerName: 'Number Of Children',
-        type: 'number',
-        align: "center", width: 170,
-    },
-    {
-        field: 'status',
-        headerName: 'Status',
-        align: "center", width: 120,
-    },
-    // {
-    //     field: 'fullName',
-    //     headerName: 'Full name',
-    //     description: 'This column has a value getter and is not sortable.',
-    //     sortable: false,
-    //     width: 160,
-    //     valueGetter: (params) =>
-    //         `${params.getValue(params.id, 'firstName') || ''} ${params.getValue(params.id, 'lastName') || ''
-    //         }`,
-    // },
 ];
 
-const rows = [
-    { id: 1, name: 'Snow', roomNo: 'Jon', checkedIn: 35, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 2, name: 'Lannister', roomNo: 'Cersei', checkedIn: 42, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 3, name: 'Lannister', roomNo: 'Jaime', checkedIn: 45, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 4, name: 'Stark', roomNo: 'Arya', checkedIn: 16, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 5, name: 'Targaryen', roomNo: 'Daenerys', checkedIn: 5, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 6, name: 'Melisandre', roomNo: null, checkedIn: 150, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 7, name: 'Clifford', roomNo: 'Ferrara', checkedIn: 44, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 8, name: 'Frances', roomNo: 'Rossini', checkedIn: 36, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-    { id: 9, name: 'Roxie', roomNo: 'Harvey', checkedIn: 65, lengthOfStay: 5, noOfAdults: 4, noOfChildren: 2, status: "In-Hotel" },
-];
 
 const style = {
     position: 'absolute',
@@ -79,18 +64,69 @@ const style = {
     minHeight: 200
 };
 
-const date = new Date()
-
 
 const AttendanceStats = () => {
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
     const [selected, setSelected] = useState([])
-    const [open, setOpen] = useState(false);
+    const [date, setDate] = useState("")
+    const [helper, setHelper] = useState("")
+    const [attendees, setAttendees] = useState([])
+    const [absentees, setAbsentees] = useState([])
+    const [whichStat, setWhichStat] = useState(true)
+    const branchId = useSelector(state => state.branch.branchId)
+
+
+    const getAttendance = async (branchId = "", date = "") => {
+        try {
+            const response = await api.get("/hr/attendance/getStats/", {
+                params: {
+                    branchId: branchId,
+                    date: date
+                }
+            })
+            const data = await response.data
+            const message = data.message
+            setHelper(message)
+            const isAvailable = data.data.isSuccess
+            let rows = data.data.data
+            let attendees = rows.attendees
+            let absentees = rows.absentees
+            if (isAvailable) {
+                attendees = attendees.filter((row, index, arr) => index === arr.findIndex((item) => row.id === item.id))
+                absentees = absentees.filter((row, index, arr) => index === arr.findIndex((item) => row.id === item.id))
+                setAbsentees(absentees)
+                setAttendees(attendees)
+            } else {
+                setAbsentees([])
+                setAttendees([])
+            }
+        } catch (error) {
+            const data = await error.response.data
+            const message = await data.message
+            setHelper(message)
+            setAbsentees([])
+            setAttendees([])
+
+        }
+    }
+
+    useEffect(() => {
+        getAttendance(branchId, date)
+    }, [branchId, date])
+
+
 
     return (
         <>
             <Box sx={{ display: 'flex', justifyContent: 'space-evenly', alignItems: 'center' }}>
+                <FormControlLabel
+                    control={<Switch
+                        checked={whichStat}
+                        onChange={() => setWhichStat(!whichStat)}
+                    />}
+                    label={whichStat ? 'Attendees' : 'Absentess'}
+                    labelPlacement="start"
+                    sx={{ margin: '1rem', justifySelf: 'flex-start' }}
+                />
                 <_TextField
                     id="date"
                     label="Search By Date"
@@ -100,9 +136,8 @@ const AttendanceStats = () => {
                     }}
                     name="date"
                     shrink={true}
-                    // onChange={props.onChange}
-                    error={false}
-                    // helper={}
+                    onChange={(e) => setDate(e.target.value)}
+                    value={date}
                     margin='normal'
                     sx={{
                         padding: 2,
@@ -111,32 +146,22 @@ const AttendanceStats = () => {
                     variant="standard"
                     focused={true}
                     fullwidth={false}
-                    default={date.toLocaleDateString("en-US")}
-                    pHolder={date.toLocaleDateString("en-US")}
                 />
-                <Autocomplete
-                    disablePortal
-                    options={["Branch 1", "Branch 2"]}
-                    renderInput={(params) => <TextField {...params} label="Branch" variant="standard" />}
+                <BranchField container={{ display: 'flex' }} sx={{ margin: '1rem', width: '25rem' }} />
 
-                    sx={{ width: 1 / 5 }}
-
-                />
             </Box>
 
             <div style={{ display: 'flex' }}>
-                <div style={{ height: 400, width: '100%' }}>
+                <div style={{ height: '70vh', width: '100%' }}>
                     <DataGrid
-                        rows={rows}
+                        rows={whichStat ? attendees : absentees}
                         columns={columns}
-                        pageSize={5}
-                        rowsPerPageOptions={[5]}
                         checkboxSelection
                         disableColumnFilter
                         onSelectionModelChange={(...e) => setSelected(e[0])}
                         isRowSelectable={(item) => selected.length > 1 ? false : true}
-
-
+                        autoPageSize
+                        sx={{ fontSize: 20 }}
                     />
                 </div>
 

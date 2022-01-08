@@ -15,6 +15,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { NavLink, useLocation, Link as LinkRouter } from 'react-router-dom';
+import useAuth from '../../hooks/useAuth';
 
 const lightColor = 'rgba(255, 255, 255, 0.7)';
 
@@ -50,6 +51,23 @@ const sections = {
             },
         ]
 
+    },
+    Statistics: {
+        section: "Statistics",
+        subSections: [
+            {
+                label: "Bar",
+                path: "/protected/Statistics/BarStatsDaily"
+            },
+            {
+                label: "Attendance",
+                path: "/protected/Statistics/AttendaceStats"
+            },
+            {
+                label: "Income",
+                path: "/protected/Statistics/IncomeStats"
+            },
+        ]
     },
     Bar: {
         section: "Bar",
@@ -127,30 +145,15 @@ const sections = {
         ]
 
     },
-    Statistics: {
-        section: "Statistics",
-        subSections: [
-            {
-                label: "Bar",
-                path: "/protected/Statistics/BarStatsDaily"
-            },
-            {
-                label: "Attendance",
-                path: "/protected/Statistics/AttendaceStats"
-            },
-            {
-                label: "Income",
-                path: "/protected/Statistics/IncomeStats"
-            },
-        ]
-
-    },
 }
 
 
 
 function Header(props) {
+    const auth = useAuth()
+    const userData = auth.userData
     const location = useLocation().pathname
+
     const section = Object.keys(sections).find(sub => {
         const regex = new RegExp(sub)
         if (regex.test(location)) {
@@ -158,7 +161,6 @@ function Header(props) {
         }
     })
     const { onDrawerToggle } = props;
-
 
     return (
         <React.Fragment>
@@ -178,13 +180,13 @@ function Header(props) {
                         <Grid item xs container sx={{ height: '9em' }}  >
                             <Grid item container direction="row" columnGap={10} sx={{ margin: '1rem 2.5rem' }}>
                                 <Grid item  >
-                                    <Typography>Employee Name</Typography>
+                                    <Typography>{userData.userName}</Typography>
                                 </Grid>
                                 <Grid item  >
-                                    <Typography>Employee Status</Typography>
+                                    <Typography>{userData.empStatus}</Typography>
                                 </Grid>
                                 <Grid item  >
-                                    <Typography>Branch</Typography>
+                                    <Typography>Branch No: {userData.branchId || ""}</Typography>
                                 </Grid>
                             </Grid>
 
